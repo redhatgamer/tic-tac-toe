@@ -15,14 +15,154 @@ function checkWinner(board){
   if(board.every(Boolean)) return {winner:"Draw", line:[]};
   return {winner:null, line:[]};
 }
+/* 
+ * =================================================================
+ * 🎯 MINIMAX ALGORITHM IMPLEMENTATION - TODO FOR YOUR FRIEND
+ * =================================================================
+ * 
+ * STATUS: Alpha-beta is implemented and working! ✅
+ * YOUR TASK: Implement the basic minimax algorithm for comparison! 📚
+ * 
+ * The evaluate() function is complete - it scores positions correctly.
+ * The searchBestMove() function works with alpha-beta pruning.
+ * 
+ * YOUR CHALLENGE: 
+ * Create a pure minimax implementation (without alpha-beta pruning)
+ * so you can compare the performance difference between the two algorithms!
+ */
+
 function evaluate(board, ai, opp){
   const {winner} = checkWinner(board);
-  if(winner===ai) return 10;
-  if(winner===opp) return -10;
-  if(winner==="Draw") return 0;
+  if(winner === ai) return 10;
+  if(winner === opp) return -10;
+  if(winner === "Draw") return 0;
   return null;
 }
+
 const microPause = () => new Promise(r=>setTimeout(r,0));
+
+/* 
+ * FUNCTION 2: searchBestMove({board, aiPlayer, oppPlayer, useAlphaBeta, onProgress, yieldEvery})
+ * -----------------------------------------------------------------------------------------------
+ * Purpose: Find the best move using minimax algorithm with optional alpha-beta pruning
+ * 
+ * Parameters:
+ *   - board: Current board state (array of 9 elements)
+ *   - aiPlayer: AI symbol ("X" or "O")
+ *   - oppPlayer: Opponent symbol ("X" or "O") 
+ *   - useAlphaBeta: Boolean - whether to use alpha-beta pruning for optimization
+ *   - onProgress: Callback function for live performance updates
+ *   - yieldEvery: How often to yield control for UI updates (default 200)
+ * 
+ * Must Return: {move: bestMoveIndex, stats: {nodes, pruned, durationMs}}
+ * 
+ * MINIMAX ALGORITHM PSEUDOCODE:
+ * -----------------------------
+ * function minimax(board, isMaximizing, alpha, beta):
+ *     if game is over:
+ *         return evaluation score
+ *     
+ *     if isMaximizing (AI turn):
+ *         bestScore = -infinity
+ *         for each available move:
+ *             make move on copy of board
+ *             score = minimax(newBoard, false, alpha, beta)
+ *             bestScore = max(bestScore, score)
+ *             
+ *             // Alpha-beta pruning (only if useAlphaBeta is true):
+ *             alpha = max(alpha, score)
+ *             if beta <= alpha:
+ *                 break (prune remaining moves, add to stats.pruned)
+ *         return bestScore
+ *     
+ *     else (opponent turn):
+ *         bestScore = +infinity
+ *         for each available move:
+ *             make move on copy of board
+ *             score = minimax(newBoard, true, alpha, beta)
+ *             bestScore = min(bestScore, score)
+ *             
+ *             // Alpha-beta pruning (only if useAlphaBeta is true):
+ *             beta = min(beta, score)
+ *             if beta <= alpha:
+ *                 break (prune remaining moves, add to stats.pruned)
+ *         return bestScore
+ * 
+ * IMPLEMENTATION STEPS:
+ * ---------------------
+ * 1. Create stats object: {nodes: 0, pruned: 0, start: performance.now(), durationMs: 0}
+ * 2. Create inner minimax function (can be async for better performance)
+ * 3. For each possible move, call minimax and track the best score + move
+ * 4. Track performance: increment stats.nodes for each position explored
+ * 5. If using alpha-beta pruning, track stats.pruned when cuts occur
+ * 6. Call onProgress?.(stats) every yieldEvery iterations for live UI updates
+ * 7. Return {move: bestMoveIndex, stats: finalStats}
+ * 
+ * HELPER FUNCTIONS AVAILABLE:
+ * ---------------------------
+ * - availableMoves(board) - Returns array of empty square indices [0-8]
+ * - cloneBoard(board) - Creates a copy of the board for safe recursion
+ * - evaluate(board, aiPlayer, oppPlayer) - Your evaluation function
+ * - microPause() - Use with await for yielding control: await microPause()
+ * 
+ * EXAMPLE STRUCTURE:
+ * ------------------
+ * async function searchBestMove({board, aiPlayer, oppPlayer, useAlphaBeta, onProgress, yieldEvery=200}){
+ *   const stats = { nodes:0, pruned:0, start: performance.now(), durationMs: 0 };
+ *   let yieldCounter = 0;
+ * 
+ *   async function minimax(currentBoard, isMaximizing, alpha, beta) {
+ *     // Yield control periodically for UI responsiveness
+ *     if(++yieldCounter % yieldEvery === 0){
+ *       onProgress?.({...stats, durationMs: performance.now() - stats.start});
+ *       await microPause();
+ *     }
+ * 
+ *     // Check if game is over
+ *     const score = evaluate(currentBoard, aiPlayer, oppPlayer);
+ *     if(score !== null) return {score};
+ * 
+ *     // Get available moves
+ *     const moves = availableMoves(currentBoard);
+ * 
+ *     if(isMaximizing) {
+ *       // AI turn - maximize score
+ *       let best = {score: -Infinity, move: null};
+ *       for(let i = 0; i < moves.length; i++){
+ *         const move = moves[i];
+ *         const newBoard = cloneBoard(currentBoard);
+ *         newBoard[move] = aiPlayer;
+ *         stats.nodes++;
+ *         
+ *         const result = await minimax(newBoard, false, alpha, beta);
+ *         if(result.score > best.score){
+ *           best = {score: result.score, move: move};
+ *         }
+ *         
+ *         // Alpha-beta pruning for maximizing player
+ *         if(useAlphaBeta){
+ *           alpha = Math.max(alpha, result.score);
+ *           if(beta <= alpha){
+ *             stats.pruned += (moves.length - i - 1);
+ *             break;
+ *           }
+ *         }
+ *       }
+ *       return best;
+ *     } else {
+ *       // Opponent turn - minimize score  
+ *       let best = {score: Infinity, move: null};
+ *       // ... implement minimizing logic similar to above
+ *       return best;
+ *     }
+ *   }
+ * 
+ *   const result = await minimax(board, true, -Infinity, Infinity);
+ *   stats.durationMs = performance.now() - stats.start;
+ *   onProgress?.(stats);
+ *   return {move: result.move, stats};
+ * }
+ */
 
 async function searchBestMove({board, aiPlayer, oppPlayer, useAlphaBeta, onProgress, yieldEvery=200}){
   const stats = { nodes:0, pruned:0, start: performance.now(), durationMs: 0 };
@@ -68,6 +208,22 @@ async function searchBestMove({board, aiPlayer, oppPlayer, useAlphaBeta, onProgr
       return best;
     }
   }
+
+  // TODO FOR YOUR FRIEND: The algorithm above works for BOTH minimax and alpha-beta!
+  // When useAlphaBeta=false, it's pure minimax (no pruning occurs)
+  // When useAlphaBeta=true, it's alpha-beta pruning (faster!)
+  // 
+  // Your task: Implement a separate, cleaner version of JUST the basic minimax
+  // algorithm (without alpha-beta pruning) for educational comparison.
+  // 
+  // You could create a separate function like:
+  // async function pureMinimaxAsync(b, isMax) {
+  //   // Implement minimax without alpha, beta parameters
+  //   // This will be slower but easier to understand
+  // }
+  // 
+  // Then modify this function to choose between the two implementations
+  // based on the useAlphaBeta flag.
 
   const result = await minimaxAsync(board, true, -Infinity, Infinity);
   stats.durationMs = performance.now() - stats.start;
