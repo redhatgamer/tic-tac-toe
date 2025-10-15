@@ -55,119 +55,49 @@ const microPause = () => new Promise(r=>setTimeout(r,0));
  *   - yieldEvery: How often to yield control for UI updates (default 200)
  * 
  * Must Return: {move: bestMoveIndex, stats: {nodes, pruned, durationMs}}
- * 
- * MINIMAX ALGORITHM PSEUDOCODE:
- * -----------------------------
- * function minimax(board, isMaximizing, alpha, beta):
- *     if game is over:
- *         return evaluation score
- *     
- *     if isMaximizing (AI turn):
- *         bestScore = -infinity
- *         for each available move:
- *             make move on copy of board
- *             score = minimax(newBoard, false, alpha, beta)
- *             bestScore = max(bestScore, score)
- *             
- *             // Alpha-beta pruning (only if useAlphaBeta is true):
- *             alpha = max(alpha, score)
- *             if beta <= alpha:
- *                 break (prune remaining moves, add to stats.pruned)
- *         return bestScore
- *     
- *     else (opponent turn):
- *         bestScore = +infinity
- *         for each available move:
- *             make move on copy of board
- *             score = minimax(newBoard, true, alpha, beta)
- *             bestScore = min(bestScore, score)
- *             
- *             // Alpha-beta pruning (only if useAlphaBeta is true):
- *             beta = min(beta, score)
- *             if beta <= alpha:
- *                 break (prune remaining moves, add to stats.pruned)
- *         return bestScore
- * 
- * IMPLEMENTATION STEPS:
- * ---------------------
- * 1. Create stats object: {nodes: 0, pruned: 0, start: performance.now(), durationMs: 0}
- * 2. Create inner minimax function (can be async for better performance)
- * 3. For each possible move, call minimax and track the best score + move
- * 4. Track performance: increment stats.nodes for each position explored
- * 5. If using alpha-beta pruning, track stats.pruned when cuts occur
- * 6. Call onProgress?.(stats) every yieldEvery iterations for live UI updates
- * 7. Return {move: bestMoveIndex, stats: finalStats}
- * 
- * HELPER FUNCTIONS AVAILABLE:
- * ---------------------------
- * - availableMoves(board) - Returns array of empty square indices [0-8]
- * - cloneBoard(board) - Creates a copy of the board for safe recursion
- * - evaluate(board, aiPlayer, oppPlayer) - Your evaluation function
- * - microPause() - Use with await for yielding control: await microPause()
- * 
- * EXAMPLE STRUCTURE:
- * ------------------
- * async function searchBestMove({board, aiPlayer, oppPlayer, useAlphaBeta, onProgress, yieldEvery=200}){
- *   const stats = { nodes:0, pruned:0, start: performance.now(), durationMs: 0 };
- *   let yieldCounter = 0;
- * 
- *   async function minimax(currentBoard, isMaximizing, alpha, beta) {
- *     // Yield control periodically for UI responsiveness
- *     if(++yieldCounter % yieldEvery === 0){
- *       onProgress?.({...stats, durationMs: performance.now() - stats.start});
- *       await microPause();
- *     }
- * 
- *     // Check if game is over
- *     const score = evaluate(currentBoard, aiPlayer, oppPlayer);
- *     if(score !== null) return {score};
- * 
- *     // Get available moves
- *     const moves = availableMoves(currentBoard);
- * 
- *     if(isMaximizing) {
- *       // AI turn - maximize score
- *       let best = {score: -Infinity, move: null};
- *       for(let i = 0; i < moves.length; i++){
- *         const move = moves[i];
- *         const newBoard = cloneBoard(currentBoard);
- *         newBoard[move] = aiPlayer;
- *         stats.nodes++;
- *         
- *         const result = await minimax(newBoard, false, alpha, beta);
- *         if(result.score > best.score){
- *           best = {score: result.score, move: move};
- *         }
- *         
- *         // Alpha-beta pruning for maximizing player
- *         if(useAlphaBeta){
- *           alpha = Math.max(alpha, result.score);
- *           if(beta <= alpha){
- *             stats.pruned += (moves.length - i - 1);
- *             break;
- *           }
- *         }
- *       }
- *       return best;
- *     } else {
- *       // Opponent turn - minimize score  
- *       let best = {score: Infinity, move: null};
- *       // ... implement minimizing logic similar to above
- *       return best;
- *     }
- *   }
- * 
- *   const result = await minimax(board, true, -Infinity, Infinity);
- *   stats.durationMs = performance.now() - stats.start;
- *   onProgress?.(stats);
- *   return {move: result.move, stats};
- * }
  */
 
 async function searchBestMove({board, aiPlayer, oppPlayer, useAlphaBeta, onProgress, yieldEvery=200}){
   const stats = { nodes:0, pruned:0, start: performance.now(), durationMs: 0 };
   let yieldCounter = 0;
+  // Pure minimax implementation (no alpha-beta pruning). This is
+  // provided for comparison and educational purposes. It explores
+  // the entire game tree (no pruning) and counts visited nodes.
+  async function pureMinimaxAsync(b, isMax){
+    if(++yieldCounter % yieldEvery === 0){
+      onProgress?.({ ...stats, durationMs: performance.now() - stats.start });
+      await microPause();
+    }
+    const score = evaluate(b, aiPlayer, oppPlayer);
+    if(score !== null) return { score };
+    const moves = availableMoves(b);
+    if(isMax){
+      let best = { score: -Infinity, move: null };
+      for(let i=0;i<moves.length;i++){
+        const m = moves[i];
+        const nb = cloneBoard(b); nb[m] = aiPlayer;
+        stats.nodes++;
+        const res = await pureMinimaxAsync(nb, false);
+        if(res.score > best.score) best = { score: res.score, move: m };
+      }
+      return best;
+    } else {
+      let best = { score: Infinity, move: null };
+      for(let i=0;i<moves.length;i++){
+        const m = moves[i];
+        const nb = cloneBoard(b); nb[m] = oppPlayer;
+        stats.nodes++;
+        const res = await pureMinimaxAsync(nb, true);
+        if(res.score < best.score) best = { score: res.score, move: m };
+      }
+      return best;
+    }
+  }
 
+  // Minimax with optional alpha-beta pruning. When useAlphaBeta is false
+  // this function still works as basic minimax because alpha/beta checks
+  // won't trigger pruning, but we provide `pureMinimaxAsync` above as a
+  // clearly separate, simpler implementation for teaching and measurement.
   async function minimaxAsync(b, isMax, alpha, beta){
     if(++yieldCounter % yieldEvery === 0){
       onProgress?.({ ...stats, durationMs: performance.now() - stats.start });
@@ -209,23 +139,15 @@ async function searchBestMove({board, aiPlayer, oppPlayer, useAlphaBeta, onProgr
     }
   }
 
-  // TODO FOR YOUR FRIEND: The algorithm above works for BOTH minimax and alpha-beta!
-  // When useAlphaBeta=false, it's pure minimax (no pruning occurs)
-  // When useAlphaBeta=true, it's alpha-beta pruning (faster!)
-  // 
-  // Your task: Implement a separate, cleaner version of JUST the basic minimax
-  // algorithm (without alpha-beta pruning) for educational comparison.
-  // 
-  // You could create a separate function like:
-  // async function pureMinimaxAsync(b, isMax) {
-  //   // Implement minimax without alpha, beta parameters
-  //   // This will be slower but easier to understand
-  // }
-  // 
-  // Then modify this function to choose between the two implementations
-  // based on the useAlphaBeta flag.
+  
 
-  const result = await minimaxAsync(board, true, -Infinity, Infinity);
+  let result;
+  if(useAlphaBeta === false){
+    // Use the pure minimax implementation for comparison
+    result = await pureMinimaxAsync(board, true);
+  } else {
+    result = await minimaxAsync(board, true, -Infinity, Infinity);
+  }
   stats.durationMs = performance.now() - stats.start;
   onProgress?.(stats);
   return { move: result.move, stats };
@@ -263,10 +185,13 @@ function Cell({ value, onClick, highlight, disabled }){
 
 export default function App(){
   const [board, setBoard] = useState(Array(9).fill(null));
+  const [view, setView] = useState("home"); // home | game
   const [turn, setTurn] = useState("X");
   const [mode, setMode] = useState("hvh"); // hvh | hvai | aivai
   const [firstPlayer, setFirstPlayer] = useState("X");
   const [humanPlaysAs, setHumanPlaysAs] = useState("X");
+  const [player1Symbol, setPlayer1Symbol] = useState("X");
+  const [player2Symbol, setPlayer2Symbol] = useState("O");
   const [ai1Algo, setAi1Algo] = useState("alphabeta");
   const [ai2Algo, setAi2Algo] = useState("alphabeta");
   const [thinking, setThinking] = useState(false);
@@ -281,6 +206,7 @@ export default function App(){
     return saved ? JSON.parse(saved) : false;
   });
   const isMounted = useRef(true);
+  const aiSearchIdRef = useRef(0);
   useEffect(()=>()=>{ isMounted.current = false; }, []);
 
   useEffect(() => {
@@ -304,6 +230,10 @@ export default function App(){
   const { winner: w, line } = useMemo(()=>checkWinner(board), [board]);
   useEffect(()=>{ setWinner(w); setWinLine(line); }, [w, line]);
 
+  function goToGame(){ resetBoard(firstPlayer); setView("game"); }
+  function goToModes(){ setView("modes"); }
+  function goHome(){ setView("home"); }
+
   function resetBoard(newFirst=firstPlayer){
     setBoard(Array(9).fill(null));
     setTurn(newFirst);
@@ -311,6 +241,9 @@ export default function App(){
     setWinLine([]);
     setLastStats({nodes:0, pruned:0, durationMs:0});
     setTotalStats({nodes:0, pruned:0, durationMs:0});
+    setThinking(false);
+    // bump search id to cancel any in-flight AI searches
+    aiSearchIdRef.current += 1;
   }
   function hardReset(){ resetBoard(firstPlayer); setAutoRunning(false); }
 
@@ -322,23 +255,38 @@ export default function App(){
     return true;
   }
 
-  async function aiMoveFor(symbol, algo){
-    if(winner) return;
-    setThinking(true);
-    const aiPlayer = symbol;
-    const oppPlayer = symbol==="X" ? "O":"X";
+  async function aiMoveFor(symbol, algo, useBoard=null){
+    // optional: accept a board snapshot so AI uses the freshest board
+    async function _aiMoveFor(symbol, algo, useBoardInner){
+      // capture search id so we can ignore stale results
+      const searchId = aiSearchIdRef.current;
+      // if the provided board is already terminal, don't move
+      const term = checkWinner(useBoardInner);
+      if(term && term.winner) return;
+      setThinking(true);
+      const aiPlayer = symbol;
+      const oppPlayer = symbol==="X" ? "O":"X";
 
-    const { move, stats } = await searchBestMove({
-      board, aiPlayer, oppPlayer,
-      useAlphaBeta: algo === "alphabeta",
-      onProgress: (s) => { if(!isMounted.current) return; setLastStats({nodes:s.nodes, pruned:s.pruned, durationMs:s.durationMs}); }
-    });
-
-    if(!isMounted.current) return;
-    setThinking(false);
-    setLastStats(stats);
-    setTotalStats(prev => ({ nodes: prev.nodes + stats.nodes, pruned: prev.pruned + stats.pruned, durationMs: prev.durationMs + stats.durationMs }));
-    if(move != null) place(move, symbol);
+      const { move, stats } = await searchBestMove({
+        board: useBoardInner, aiPlayer, oppPlayer,
+        useAlphaBeta: algo === "alphabeta",
+        onProgress: (s) => { if(!isMounted.current) return; setLastStats({nodes:s.nodes, pruned:s.pruned, durationMs:s.durationMs}); }
+      });
+      if(!isMounted.current) return;
+      // if a reset or newer search happened, ignore this result
+      if(aiSearchIdRef.current !== searchId) return;
+      setThinking(false);
+      setLastStats(stats);
+      setTotalStats(prev => ({ nodes: prev.nodes + stats.nodes, pruned: prev.pruned + stats.pruned, durationMs: prev.durationMs + stats.durationMs }));
+      if(move != null){
+        // apply move based on the board used for search to avoid overwriting
+        const nb = cloneBoard(useBoardInner);
+        nb[move] = symbol;
+        setBoard(nb);
+        setTurn(symbol==="X" ? "O":"X");
+      }
+    }
+    return _aiMoveFor(symbol, algo, useBoard || board);
   }
 
   const autoLoopRef = useRef(null);
@@ -368,7 +316,13 @@ export default function App(){
     if(mode==="hvai"){
       if(turn!==humanPlaysAs) return;
       const ok = place(i, turn);
-      if(ok){ const aiSymbol = humanPlaysAs==="X" ? "O":"X"; setTimeout(()=>aiMoveFor(aiSymbol, ai1Algo), 50); }
+      if(ok){
+        // create a fresh snapshot including the player's move so AI searches the correct state
+        const nb = cloneBoard(board);
+        nb[i] = turn;
+        const aiSymbol = humanPlaysAs==="X" ? "O":"X";
+        setTimeout(()=>aiMoveFor(aiSymbol, ai1Algo, nb), 50);
+      }
       return;
     }
     // aivai disabled
@@ -377,14 +331,165 @@ export default function App(){
   const statusText = useMemo(()=>{
     if(winner==="Draw") return "Game over: Draw";
     if(winner==="X" || winner==="O") return `Game over: ${winner} wins`;
+    // Determine actor label
+    if(mode === 'hvh') return `Turn: player (${turn})`;
+    if(mode === 'hvai'){
+      const aiSymbol = humanPlaysAs === 'X' ? 'O' : 'X';
+      return turn === aiSymbol ? `Turn: computer (${turn})` : `Turn: player (${turn})`;
+    }
+    if(mode === 'aivai') return `Turn: computer (${turn})`;
     return `Turn: ${turn}`;
-  }, [winner, turn]);
+  }, [winner, turn, mode, humanPlaysAs]);
 
   const pruningEff = useMemo(()=>{
     const nodes = lastStats.nodes, pruned = lastStats.pruned;
     const denom = nodes + pruned;
     return denom>0 ? `${((pruned/denom)*100).toFixed(1)}%` : "0%";
   }, [lastStats]);
+
+  if(view === "home"){
+    return (
+      <div className="container">
+        <div className="header">
+          <div>
+            <h1 className="h1">Welcome to Tic‑Tac‑Toe</h1>
+            <div className="sub">Minimax vs Alpha‑Beta.</div>
+          </div>
+          <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
+            <button 
+              className="theme-toggle" 
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+            >
+              {isDarkMode ? '☀️' : '🌙'}
+            </button>
+          </div>
+        </div>
+
+        <section style={{display:'flex', justifyContent:'center', alignItems:'center', height:'60vh'}}>
+          <button className="btn btn-large" onClick={goToModes}>Start</button>
+        </section>
+
+        <footer>Built for Minimax vs Alpha‑Beta comparison with real‑time metrics.</footer>
+      </div>
+    );
+  }
+
+  if(view === "modes"){
+    return (
+      <div className="container">
+        <div className="header">
+          <div>
+            <h1 className="h1">Select Game Mode</h1>
+            <div className="sub">Choose players, sides, and algorithms (where applicable).</div>
+          </div>
+          <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
+            <button className="theme-toggle" onClick={() => setIsDarkMode(!isDarkMode)} title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}>
+              {isDarkMode ? '☀️' : '🌙'}
+            </button>
+            <button className="btn" onClick={goHome}>Home</button>
+          </div>
+        </div>
+
+        <section className="grid-2">
+          <div className="card">
+            <RadioGroup
+              label="Game Mode"
+              name="mode"
+              value={mode}
+              onChange={(v)=>{ setMode(v); setAutoRunning(false); resetBoard(firstPlayer); }}
+              options={[
+                {label:"Human vs Human", value:"hvh"},
+                {label:"Human vs AI", value:"hvai"},
+                {label:"AI vs AI", value:"aivai"},
+              ]}
+            />
+
+            <div className="row" style={{marginTop:12}}>
+              <RadioGroup
+                label={'Choose first player'}
+                name="first"
+                value={firstPlayer}
+                onChange={(v)=>{ setFirstPlayer(v); resetBoard(v); }}
+                options={[{label:"X", value:"X"}, {label:"O", value:"O"}]}
+              />
+            </div>
+
+            <div className="row" style={{marginTop:12}}>
+              {mode === 'hvh' && (
+                <>
+                  <RadioGroup
+                    label="Player 1"
+                    name="p1"
+                    value={player1Symbol}
+                    onChange={(v)=>{ setPlayer1Symbol(v); setPlayer2Symbol(v === 'X' ? 'O' : 'X'); resetBoard(firstPlayer); }}
+                    options={[{label:"X", value:"X"}, {label:"O", value:"O"}]}
+                  />
+                  <RadioGroup
+                    label="Player 2"
+                    name="p2"
+                    value={player2Symbol}
+                    onChange={(v)=>{ setPlayer2Symbol(v); setPlayer1Symbol(v === 'X' ? 'O' : 'X'); resetBoard(firstPlayer); }}
+                    options={[{label:"X", value:"X"}, {label:"O", value:"O"}]}
+                  />
+                </>
+              )}
+
+              {mode === 'hvai' && (
+                <div style={{display:'flex', gap:6, alignItems:'center'}}>
+                  <div style={{minWidth:100}}>
+                    <div className="label">Computer</div>
+                    <div style={{marginTop:6}}>
+                      <label className="pill active" style={{padding:'6px 10px', display:'inline-block'}}>{humanPlaysAs === 'X' ? 'O' : 'X'}</label>
+                    </div>
+                  </div>
+                  <div style={{flex:1, maxWidth:180}}>
+                    <RadioGroup
+                      label="Player"
+                      name="humanAs"
+                      value={humanPlaysAs}
+                      onChange={(v)=>{ setHumanPlaysAs(v); resetBoard(firstPlayer); }}
+                      options={[{label:"X", value:"X"}, {label:"O", value:"O"}]}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {mode !== "hvh" && (
+              <div className="row" style={{marginTop:12}}>
+                <RadioGroup
+                  label={mode==="aivai" ? "Algorithm (X)" : "Algorithm"}
+                  name="ai1"
+                  value={ai1Algo}
+                  onChange={setAi1Algo}
+                  options={[{label:"Minimax", value:"minimax"}, {label:"Alpha‑Beta", value:"alphabeta"}]}
+                />
+                {mode==="aivai" && (
+                  <RadioGroup
+                    label="Algorithm (O)"
+                    name="ai2"
+                    value={ai2Algo}
+                    onChange={setAi2Algo}
+                    options={[{label:"Minimax", value:"minimax"}, {label:"Alpha‑Beta", value:"alphabeta"}]}
+                  />
+                )}
+              </div>
+            )}
+
+            <div style={{marginTop:18}}>
+              <button className="btn" onClick={()=>{ resetBoard(firstPlayer); setView('game'); }}>Play</button>
+              <button className="btn" style={{marginLeft:8}} onClick={goHome}>Cancel</button>
+            </div>
+          </div>
+
+          {/* No live performance on Modes page per request */}
+        </section>
+
+        <footer>Built for Minimax vs Alpha‑Beta comparison with real‑time metrics.</footer>
+      </div>
+    );
+  }
 
   return (
     <div className="container">
@@ -402,65 +507,29 @@ export default function App(){
             {isDarkMode ? '☀️' : '🌙'}
           </button>
           <button className="btn" onClick={hardReset}>Restart</button>
+          <button className="btn" onClick={goHome}>Home</button>
         </div>
       </div>
 
       <section className="grid-2">
         <div className="card">
-          <RadioGroup
-            label="Game Mode"
-            name="mode"
-            value={mode}
-            onChange={(v)=>{ setMode(v); setAutoRunning(false); resetBoard(firstPlayer); }}
-            options={[
-              {label:"Human vs Human", value:"hvh"},
-              {label:"Human vs AI", value:"hvai"},
-              {label:"AI vs AI", value:"aivai"},
-            ]}
-          />
-
-          <div className="row" style={{marginTop:12}}>
-            <RadioGroup
-              label="First Player"
-              name="first"
-              value={firstPlayer}
-              onChange={(v)=>{ setFirstPlayer(v); resetBoard(v); }}
-              options={[{label:"X", value:"X"}, {label:"O", value:"O"}]}
-            />
-            {mode==="hvai" && (
-              <RadioGroup
-                label="You Play As"
-                name="humanAs"
-                value={humanPlaysAs}
-                onChange={(v)=>{ setHumanPlaysAs(v); resetBoard(firstPlayer); }}
-                options={[{label:"X", value:"X"}, {label:"O", value:"O"}]}
-              />
-            )}
+          <div className="label">Selected Mode</div>
+          <div className="small">Mode: {mode === 'hvh' ? 'Human vs Human' : mode === 'hvai' ? 'Human vs AI' : 'AI vs AI'}</div>
+          <div style={{marginTop:12}}>
+            {mode === 'hvai' && <div className="small">Computer: {humanPlaysAs === 'X' ? 'O' : 'X'}</div>}
+            {mode === 'hvai' && <div className="small">Player: {humanPlaysAs}</div>}
+            {mode === 'hvh' && <div className="small">Player 1: {player1Symbol}</div>}
+            {mode === 'hvh' && <div className="small">Player 2: {player2Symbol}</div>}
+            {mode !== 'hvh' && <div className="small">Algorithm: {ai1Algo === 'alphabeta' ? 'Alpha‑Beta' : 'Minimax'}</div>}
+            {mode === 'aivai' && <div className="small">Algorithm (O): {ai2Algo === 'alphabeta' ? 'Alpha‑Beta' : 'Minimax'}</div>}
           </div>
-
-          <div className="row" style={{marginTop:12}}>
-            <RadioGroup
-              label={mode==="aivai" ? "AI (X) Algorithm" : "AI Algorithm"}
-              name="ai1"
-              value={ai1Algo}
-              onChange={setAi1Algo}
-              options={[{label:"Minimax", value:"minimax"}, {label:"Alpha‑Beta", value:"alphabeta"}]}
-            />
-            {mode==="aivai" && (
-              <RadioGroup
-                label="AI (O) Algorithm"
-                name="ai2"
-                value={ai2Algo}
-                onChange={setAi2Algo}
-                options={[{label:"Minimax", value:"minimax"}, {label:"Alpha‑Beta", value:"alphabeta"}]}
-              />
-            )}
+          <div style={{marginTop:12}}>
+            <button className="btn" onClick={goToModes}>Change Mode</button>
           </div>
-
-          {mode==="aivai" && (
-            <div className="row" style={{marginTop:12}}>
+          {mode === 'aivai' && (
+            <div style={{marginTop:12}}>
               <button className="pill" onClick={()=>setAutoRunning(r=>!r)}>{autoRunning ? "Pause":"Start"} Auto‑Play</button>
-              <label className="range">
+              <label className="range" style={{marginLeft:12}}>
                 Speed
                 <input type="range" min={50} max={1000} step={10} value={speedMs} onChange={(e)=>setSpeedMs(parseInt(e.target.value,10))} />
                 <span className="small">{speedMs} ms</span>
@@ -469,24 +538,26 @@ export default function App(){
           )}
         </div>
 
-        <div className="card">
-          <div className="row" style={{justifyContent: "space-between"}}>
-            <div className="label">Live Performance</div>
-            <div className="badge">{currentAIAlgo ? (currentAIAlgo==="alphabeta" ? "Alpha‑Beta":"Minimax") : "—"}</div>
+        {mode !== 'hvh' && (
+          <div className="card">
+            <div className="row" style={{justifyContent: "space-between"}}>
+              <div className="label">Live Performance</div>
+              <div className="badge">{currentAIAlgo ? (currentAIAlgo==="alphabeta" ? "Alpha‑Beta":"Minimax") : "—"}</div>
+            </div>
+            <div className="stats">
+              <Stat k="Decision Time" v={`${(lastStats.durationMs||0).toFixed(1)} ms`} />
+              <Stat k="Nodes Explored" v={lastStats.nodes || 0} />
+              <Stat k="Pruned Nodes" v={lastStats.pruned || 0} />
+              <Stat k="Pruning Efficiency" v={pruningEff} tooltip="Pruned / (Nodes + Pruned)" />
+            </div>
+            <div className="small" style={{marginTop:8}}>{thinking ? "AI is thinking… (metrics update in real time)":"Idle"}</div>
+            <div className="stats" style={{marginTop:8}}>
+              <Stat k="Total Time" v={`${(totalStats.durationMs||0).toFixed(1)} ms`} />
+              <Stat k="Total Nodes" v={totalStats.nodes || 0} />
+              <Stat k="Total Pruned" v={totalStats.pruned || 0} />
+            </div>
           </div>
-          <div className="stats">
-            <Stat k="Decision Time" v={`${(lastStats.durationMs||0).toFixed(1)} ms`} />
-            <Stat k="Nodes Explored" v={lastStats.nodes || 0} />
-            <Stat k="Pruned Nodes" v={lastStats.pruned || 0} />
-            <Stat k="Pruning Efficiency" v={pruningEff} tooltip="Pruned / (Nodes + Pruned)" />
-          </div>
-          <div className="small" style={{marginTop:8}}>{thinking ? "AI is thinking… (metrics update in real time)":"Idle"}</div>
-          <div className="stats" style={{marginTop:8}}>
-            <Stat k="Total Time" v={`${(totalStats.durationMs||0).toFixed(1)} ms`} />
-            <Stat k="Total Nodes" v={totalStats.nodes || 0} />
-            <Stat k="Total Pruned" v={totalStats.pruned || 0} />
-          </div>
-        </div>
+        )}
       </section>
 
       <section className="grid-2" style={{alignItems:"start", marginTop:16}}>
