@@ -183,6 +183,31 @@ function Cell({ value, onClick, highlight, disabled }){
   return <button className={cls} onClick={onClick} disabled={disabled}>{value || ""}</button>;
 }
 
+function ThemeToggle({ isDarkMode, onClick, title }){
+  return (
+    <button 
+      className="theme-toggle" 
+      onClick={onClick}
+      title={title}
+    >
+      <div className="theme-toggle-inner">
+        {isDarkMode ? (
+          // Sun icon for light mode
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+        ) : (
+          // Moon icon for dark mode
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        )}
+      </div>
+    </button>
+  );
+}
+
 export default function App(){
   const [board, setBoard] = useState(Array(9).fill(null));
   const [view, setView] = useState("home"); // home | game
@@ -349,255 +374,423 @@ export default function App(){
 
   if(view === "home"){
     return (
-      <div className="container">
-        <div className="header">
-          <div>
-            <h1 className="h1">Welcome to Tic‑Tac‑Toe</h1>
-            <div className="sub">Minimax vs Alpha‑Beta.</div>
-          </div>
-          <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
-            <button 
-              className="theme-toggle" 
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
-            >
-              {isDarkMode ? '☀️' : '🌙'}
-            </button>
+      <div className="home-layout">
+        <div className="home-hero">
+          <div className="home-background-pattern"></div>
+          <div className="home-content">
+            <div className="home-header">
+              <ThemeToggle 
+                isDarkMode={isDarkMode}
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+              />
+            </div>
+            
+            <div className="home-main">
+              <div className="home-title-section">
+                <h1 className="home-title">Tic‑Tac‑Toe</h1>
+                <div className="home-subtitle">Minimax vs Alpha‑Beta</div>
+                <div className="home-description">
+                  Experience the power of game theory algorithms in action. 
+                  Compare minimax and alpha-beta pruning with real-time performance metrics.
+                </div>
+              </div>
+              
+              <div className="home-game-preview">
+                <div className="preview-board">
+                  <div className="preview-cell">X</div>
+                  <div className="preview-cell">O</div>
+                  <div className="preview-cell">X</div>
+                  <div className="preview-cell">O</div>
+                  <div className="preview-cell">X</div>
+                  <div className="preview-cell">O</div>
+                  <div className="preview-cell">X</div>
+                  <div className="preview-cell">O</div>
+                  <div className="preview-cell">X</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="home-actions">
+              <button className="btn-hero" onClick={goToModes}>
+                <span>Start Playing</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
-
-        <section style={{display:'flex', justifyContent:'center', alignItems:'center', height:'60vh'}}>
-          <button className="btn btn-large" onClick={goToModes}>Start</button>
-        </section>
-
-        <footer>Built for Minimax vs Alpha‑Beta comparison with real‑time metrics.</footer>
+        
+        <div className="home-features">
+          <div className="feature-card">
+            <div className="feature-icon">🧠</div>
+            <h3>Smart AI</h3>
+            <p>Advanced algorithms that never lose</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">⚡</div>
+            <h3>Real-time Metrics</h3>
+            <p>Watch performance data update live</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">🔬</div>
+            <h3>Algorithm Comparison</h3>
+            <p>See the difference between minimax approaches</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if(view === "modes"){
     return (
-      <div className="container">
-        <div className="header">
-          <div>
-            <h1 className="h1">Select Game Mode</h1>
-            <div className="sub">Choose players, sides, and algorithms (where applicable).</div>
-          </div>
-          <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
-            <button className="theme-toggle" onClick={() => setIsDarkMode(!isDarkMode)} title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}>
-              {isDarkMode ? '☀️' : '🌙'}
+      <div className="modes-layout">
+        <div className="modes-header">
+          <div className="modes-nav">
+            <button className="nav-btn" onClick={goHome}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9,22 9,12 15,12 15,22"/>
+              </svg>
+              Home
             </button>
-            <button className="btn" onClick={goHome}>Home</button>
+            <ThemeToggle 
+              isDarkMode={isDarkMode}
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+            />
+          </div>
+          <div className="modes-title-section">
+            <h1 className="modes-title">Game Setup</h1>
+            <div className="modes-subtitle">Configure your perfect match</div>
           </div>
         </div>
 
-        <section className="grid-2">
-          <div className="card">
-            <RadioGroup
-              label="Game Mode"
-              name="mode"
-              value={mode}
-              onChange={(v)=>{ setMode(v); setAutoRunning(false); resetBoard(firstPlayer); }}
-              options={[
-                {label:"Human vs Human", value:"hvh"},
-                {label:"Human vs AI", value:"hvai"},
-                {label:"AI vs AI", value:"aivai"},
-              ]}
-            />
-
-            <div className="row" style={{marginTop:12}}>
+        <div className="modes-wizard">
+          <div className="wizard-step">
+            <div className="step-number">1</div>
+            <div className="step-card">
+              <h3 className="step-title">Choose Game Mode</h3>
               <RadioGroup
-                label={'Choose first player'}
-                name="first"
-                value={firstPlayer}
-                onChange={(v)=>{ setFirstPlayer(v); resetBoard(v); }}
-                options={[{label:"X", value:"X"}, {label:"O", value:"O"}]}
+                label=""
+                name="mode"
+                value={mode}
+                onChange={(v)=>{ setMode(v); setAutoRunning(false); resetBoard(firstPlayer); }}
+                options={[
+                  {label:"Human vs Human", value:"hvh"},
+                  {label:"Human vs AI", value:"hvai"},
+                  {label:"AI vs AI", value:"aivai"},
+                ]}
               />
             </div>
+          </div>
 
-            <div className="row" style={{marginTop:12}}>
-              {mode === 'hvh' && (
-                <>
-                  <RadioGroup
-                    label="Player 1"
-                    name="p1"
-                    value={player1Symbol}
-                    onChange={(v)=>{ setPlayer1Symbol(v); setPlayer2Symbol(v === 'X' ? 'O' : 'X'); resetBoard(firstPlayer); }}
-                    options={[{label:"X", value:"X"}, {label:"O", value:"O"}]}
-                  />
-                  <RadioGroup
-                    label="Player 2"
-                    name="p2"
-                    value={player2Symbol}
-                    onChange={(v)=>{ setPlayer2Symbol(v); setPlayer1Symbol(v === 'X' ? 'O' : 'X'); resetBoard(firstPlayer); }}
-                    options={[{label:"X", value:"X"}, {label:"O", value:"O"}]}
-                  />
-                </>
-              )}
-
-              {mode === 'hvai' && (
-                <div style={{display:'flex', gap:6, alignItems:'center'}}>
-                  <div style={{minWidth:100}}>
-                    <div className="label">Computer</div>
-                    <div style={{marginTop:6}}>
-                      <label className="pill active" style={{padding:'6px 10px', display:'inline-block'}}>{humanPlaysAs === 'X' ? 'O' : 'X'}</label>
-                    </div>
-                  </div>
-                  <div style={{flex:1, maxWidth:180}}>
+          <div className="wizard-step">
+            <div className="step-number">2</div>
+            <div className="step-card">
+              <h3 className="step-title">Player Configuration</h3>
+              <div className="config-section">
+                <RadioGroup
+                  label="First Player"
+                  name="first"
+                  value={firstPlayer}
+                  onChange={(v)=>{ setFirstPlayer(v); resetBoard(v); }}
+                  options={[{label:"X", value:"X"}, {label:"O", value:"O"}]}
+                />
+                
+                {mode === 'hvh' && (
+                  <div className="player-config">
                     <RadioGroup
-                      label="Player"
+                      label="Player 1"
+                      name="p1"
+                      value={player1Symbol}
+                      onChange={(v)=>{ setPlayer1Symbol(v); setPlayer2Symbol(v === 'X' ? 'O' : 'X'); resetBoard(firstPlayer); }}
+                      options={[{label:"X", value:"X"}, {label:"O", value:"O"}]}
+                    />
+                    <RadioGroup
+                      label="Player 2"
+                      name="p2"
+                      value={player2Symbol}
+                      onChange={(v)=>{ setPlayer2Symbol(v); setPlayer1Symbol(v === 'X' ? 'O' : 'X'); resetBoard(firstPlayer); }}
+                      options={[{label:"X", value:"X"}, {label:"O", value:"O"}]}
+                    />
+                  </div>
+                )}
+
+                {mode === 'hvai' && (
+                  <div className="ai-config">
+                    <div className="ai-preview">
+                      <div className="ai-player">
+                        <span className="ai-label">Computer</span>
+                        <span className="ai-symbol">{humanPlaysAs === 'X' ? 'O' : 'X'}</span>
+                      </div>
+                    </div>
+                    <RadioGroup
+                      label="You Play As"
                       name="humanAs"
                       value={humanPlaysAs}
                       onChange={(v)=>{ setHumanPlaysAs(v); resetBoard(firstPlayer); }}
                       options={[{label:"X", value:"X"}, {label:"O", value:"O"}]}
                     />
                   </div>
-                </div>
-              )}
-            </div>
-
-            {mode !== "hvh" && (
-              <div className="row" style={{marginTop:12}}>
-                <RadioGroup
-                  label={mode==="aivai" ? "Algorithm (X)" : "Algorithm"}
-                  name="ai1"
-                  value={ai1Algo}
-                  onChange={setAi1Algo}
-                  options={[{label:"Minimax", value:"minimax"}, {label:"Alpha‑Beta", value:"alphabeta"}]}
-                />
-                {mode==="aivai" && (
-                  <RadioGroup
-                    label="Algorithm (O)"
-                    name="ai2"
-                    value={ai2Algo}
-                    onChange={setAi2Algo}
-                    options={[{label:"Minimax", value:"minimax"}, {label:"Alpha‑Beta", value:"alphabeta"}]}
-                  />
                 )}
               </div>
-            )}
-
-            <div style={{marginTop:18}}>
-              <button className="btn" onClick={()=>{ resetBoard(firstPlayer); setView('game'); }}>Play</button>
-              <button className="btn" style={{marginLeft:8}} onClick={goHome}>Cancel</button>
             </div>
           </div>
 
-          {/* No live performance on Modes page per request */}
-        </section>
+          {mode !== "hvh" && (
+            <div className="wizard-step">
+              <div className="step-number">3</div>
+              <div className="step-card">
+                <h3 className="step-title">AI Configuration</h3>
+                <div className="algo-selection">
+                  <RadioGroup
+                    label={mode==="aivai" ? "Algorithm for X" : "AI Algorithm"}
+                    name="ai1"
+                    value={ai1Algo}
+                    onChange={setAi1Algo}
+                    options={[{label:"Minimax", value:"minimax"}, {label:"Alpha‑Beta", value:"alphabeta"}]}
+                  />
+                  {mode==="aivai" && (
+                    <RadioGroup
+                      label="Algorithm for O"
+                      name="ai2"
+                      value={ai2Algo}
+                      onChange={setAi2Algo}
+                      options={[{label:"Minimax", value:"minimax"}, {label:"Alpha‑Beta", value:"alphabeta"}]}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
-        <footer>Built for Minimax vs Alpha‑Beta comparison with real‑time metrics.</footer>
+          <div className="wizard-actions">
+            <button className="btn-wizard-primary" onClick={()=>{ resetBoard(firstPlayer); setView('game'); }}>
+              <span>Start Game</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="5,3 19,12 5,21"/>
+              </svg>
+            </button>
+            <button className="btn-wizard-secondary" onClick={goHome}>Cancel</button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container">
-      <div className="header">
-        <div>
-          <h1 className="h1">Tic‑Tac‑Toe AI — Minimax vs Alpha‑Beta</h1>
-          <div className="sub">Play, compare algorithms, and watch live performance metrics.</div>
+    <div className="game-layout">
+      <div className="game-header">
+        <div className="game-title-section">
+          <h1 className="game-title">Tic‑Tac‑Toe AI</h1>
+          <div className="game-subtitle">Minimax vs Alpha‑Beta Analysis</div>
         </div>
-        <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
-          <button 
-            className="theme-toggle" 
+        <div className="game-controls">
+          <ThemeToggle 
+            isDarkMode={isDarkMode}
             onClick={() => setIsDarkMode(!isDarkMode)}
             title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
-          >
-            {isDarkMode ? '☀️' : '🌙'}
-          </button>
+          />
           <button className="btn" onClick={hardReset}>Restart</button>
           <button className="btn" onClick={goHome}>Home</button>
         </div>
       </div>
 
-      <section className="grid-2">
-        <div className="card">
-          <div className="label">Selected Mode</div>
-          <div className="small">Mode: {mode === 'hvh' ? 'Human vs Human' : mode === 'hvai' ? 'Human vs AI' : 'AI vs AI'}</div>
-          <div style={{marginTop:12}}>
-            {mode === 'hvai' && <div className="small">Computer: {humanPlaysAs === 'X' ? 'O' : 'X'}</div>}
-            {mode === 'hvai' && <div className="small">Player: {humanPlaysAs}</div>}
-            {mode === 'hvh' && <div className="small">Player 1: {player1Symbol}</div>}
-            {mode === 'hvh' && <div className="small">Player 2: {player2Symbol}</div>}
-            {mode !== 'hvh' && <div className="small">Algorithm: {ai1Algo === 'alphabeta' ? 'Alpha‑Beta' : 'Minimax'}</div>}
-            {mode === 'aivai' && <div className="small">Algorithm (O): {ai2Algo === 'alphabeta' ? 'Alpha‑Beta' : 'Minimax'}</div>}
-          </div>
-          <div style={{marginTop:12}}>
-            <button className="btn" onClick={goToModes}>Change Mode</button>
-          </div>
-          {mode === 'aivai' && (
-            <div style={{marginTop:12}}>
-              <button className="pill" onClick={()=>setAutoRunning(r=>!r)}>{autoRunning ? "Pause":"Start"} Auto‑Play</button>
-              <label className="range" style={{marginLeft:12}}>
-                Speed
-                <input type="range" min={50} max={1000} step={10} value={speedMs} onChange={(e)=>setSpeedMs(parseInt(e.target.value,10))} />
-                <span className="small">{speedMs} ms</span>
-              </label>
+      <div className="game-main">
+        <div className="game-left-panel">
+          <div className="game-status-card">
+            <div className="status-header">
+              <div className="status-indicator"></div>
+              <div className="status-text">{statusText}</div>
             </div>
-          )}
+            <div className="game-mode-info">
+              <span className="mode-badge">{mode.toUpperCase()}</span>
+            </div>
+          </div>
+
+          <div className="game-board-container">
+            <div className="board-wrapper">
+              <div className="board">
+                {board.map((v,i)=> (
+                  <Cell
+                    key={i}
+                    value={v}
+                    highlight={winLine.includes(i)}
+                    disabled={thinking || !!winner || (mode==="aivai") || (mode==="hvai" && turn!==humanPlaysAs)}
+                    onClick={()=>onCellClick(i)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="game-info-card">
+            <div className="game-config">
+              <h4>Current Configuration</h4>
+              <div className="config-details">
+                {mode === 'hvai' && (
+                  <>
+                    <div className="config-item">
+                      <span className="config-label">Computer:</span>
+                      <span className="config-value">{humanPlaysAs === 'X' ? 'O' : 'X'}</span>
+                    </div>
+                    <div className="config-item">
+                      <span className="config-label">Player:</span>
+                      <span className="config-value">{humanPlaysAs}</span>
+                    </div>
+                  </>
+                )}
+                {mode === 'hvh' && (
+                  <>
+                    <div className="config-item">
+                      <span className="config-label">Player 1:</span>
+                      <span className="config-value">{player1Symbol}</span>
+                    </div>
+                    <div className="config-item">
+                      <span className="config-label">Player 2:</span>
+                      <span className="config-value">{player2Symbol}</span>
+                    </div>
+                  </>
+                )}
+                {mode !== 'hvh' && (
+                  <div className="config-item">
+                    <span className="config-label">Algorithm:</span>
+                    <span className="config-value">{ai1Algo === 'alphabeta' ? 'Alpha‑Beta' : 'Minimax'}</span>
+                  </div>
+                )}
+                {mode === 'aivai' && (
+                  <div className="config-item">
+                    <span className="config-label">Algorithm (O):</span>
+                    <span className="config-value">{ai2Algo === 'alphabeta' ? 'Alpha‑Beta' : 'Minimax'}</span>
+                  </div>
+                )}
+              </div>
+              <button className="btn-config" onClick={goToModes}>Change Setup</button>
+            </div>
+
+            {mode === 'aivai' && (
+              <div className="auto-play-controls">
+                <h4>Auto-Play Controls</h4>
+                <div className="auto-controls">
+                  <button className="btn-auto" onClick={()=>setAutoRunning(r=>!r)}>
+                    {autoRunning ? "Pause" : "Start"}
+                  </button>
+                  <div className="speed-control">
+                    <label>Speed: {speedMs}ms</label>
+                    <input 
+                      type="range" 
+                      min={50} 
+                      max={1000} 
+                      step={10} 
+                      value={speedMs} 
+                      onChange={(e)=>setSpeedMs(parseInt(e.target.value,10))} 
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {mode !== 'hvh' && (
-          <div className="card">
-            <div className="row" style={{justifyContent: "space-between"}}>
-              <div className="label">Live Performance</div>
-              <div className="badge">{currentAIAlgo ? (currentAIAlgo==="alphabeta" ? "Alpha‑Beta":"Minimax") : "—"}</div>
+          <div className="game-right-panel">
+            <div className="performance-dashboard">
+              <div className="dashboard-header">
+                <h3>Performance Dashboard</h3>
+                <div className="algorithm-badge">
+                  {currentAIAlgo ? (currentAIAlgo==="alphabeta" ? "Alpha‑Beta":"Minimax") : "—"}
+                </div>
+              </div>
+
+              <div className="metrics-grid">
+                <div className="metric-card primary">
+                  <div className="metric-icon">⚡</div>
+                  <div className="metric-content">
+                    <div className="metric-value">{(lastStats.durationMs||0).toFixed(1)}ms</div>
+                    <div className="metric-label">Decision Time</div>
+                  </div>
+                </div>
+
+                <div className="metric-card">
+                  <div className="metric-icon">🔍</div>
+                  <div className="metric-content">
+                    <div className="metric-value">{lastStats.nodes || 0}</div>
+                    <div className="metric-label">Nodes Explored</div>
+                  </div>
+                </div>
+
+                <div className="metric-card">
+                  <div className="metric-icon">✂️</div>
+                  <div className="metric-content">
+                    <div className="metric-value">{lastStats.pruned || 0}</div>
+                    <div className="metric-label">Pruned Nodes</div>
+                  </div>
+                </div>
+
+                <div className="metric-card accent">
+                  <div className="metric-icon">📊</div>
+                  <div className="metric-content">
+                    <div className="metric-value">{pruningEff}</div>
+                    <div className="metric-label">Efficiency</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="thinking-indicator">
+                {thinking ? (
+                  <div className="thinking-active">
+                    <div className="thinking-spinner"></div>
+                    <span>AI is thinking... (metrics update in real time)</span>
+                  </div>
+                ) : (
+                  <div className="thinking-idle">Ready for next move</div>
+                )}
+              </div>
+
+              <div className="total-stats">
+                <h4>Session Totals</h4>
+                <div className="total-grid">
+                  <div className="total-item">
+                    <span className="total-label">Total Time:</span>
+                    <span className="total-value">{(totalStats.durationMs||0).toFixed(1)}ms</span>
+                  </div>
+                  <div className="total-item">
+                    <span className="total-label">Total Nodes:</span>
+                    <span className="total-value">{totalStats.nodes || 0}</span>
+                  </div>
+                  <div className="total-item">
+                    <span className="total-label">Total Pruned:</span>
+                    <span className="total-value">{totalStats.pruned || 0}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="stats">
-              <Stat k="Decision Time" v={`${(lastStats.durationMs||0).toFixed(1)} ms`} />
-              <Stat k="Nodes Explored" v={lastStats.nodes || 0} />
-              <Stat k="Pruned Nodes" v={lastStats.pruned || 0} />
-              <Stat k="Pruning Efficiency" v={pruningEff} tooltip="Pruned / (Nodes + Pruned)" />
-            </div>
-            <div className="small" style={{marginTop:8}}>{thinking ? "AI is thinking… (metrics update in real time)":"Idle"}</div>
-            <div className="stats" style={{marginTop:8}}>
-              <Stat k="Total Time" v={`${(totalStats.durationMs||0).toFixed(1)} ms`} />
-              <Stat k="Total Nodes" v={totalStats.nodes || 0} />
-              <Stat k="Total Pruned" v={totalStats.pruned || 0} />
+
+            <div className="help-panel">
+              <div className="help-section">
+                <h4>How to Play</h4>
+                <ul>
+                  <li>Click a square to place your mark</li>
+                  <li>Watch real-time AI performance metrics</li>
+                  <li>Switch modes anytime via "Change Setup"</li>
+                  {mode === 'aivai' && <li>Use auto-play controls to watch AI vs AI</li>}
+                </ul>
+              </div>
+              
+              <div className="notes-section">
+                <h4>Algorithm Notes</h4>
+                <ul>
+                  <li>+10 for AI win, −10 for opponent, 0 for draw</li>
+                  <li>Pruning shows nodes skipped by alpha-beta cuts</li>
+                  <li>Efficiency = Pruned / (Nodes + Pruned)</li>
+                </ul>
+              </div>
             </div>
           </div>
         )}
-      </section>
-
-      <section className="grid-2" style={{alignItems:"start", marginTop:16}}>
-        <div className="card">
-          <div className="status">
-            <div className="state">{statusText}</div>
-            <div className="small">Mode: {mode.toUpperCase()}</div>
-          </div>
-          <div className="board">
-            {board.map((v,i)=> (
-              <Cell
-                key={i}
-                value={v}
-                highlight={winLine.includes(i)}
-                disabled={thinking || !!winner || (mode==="aivai") || (mode==="hvai" && turn!==humanPlaysAs)}
-                onClick={()=>onCellClick(i)}
-              />
-            ))}
-          </div>
-        </div>
-        <aside className="sidebar">
-          <div className="card help">
-            <div className="label">How to Play</div>
-            <ul>
-              <li>Click a square to place your mark.</li>
-              <li>Switch modes and algorithms from the left panel.</li>
-              <li>In AI vs AI, press Start to watch auto‑play; adjust speed.</li>
-            </ul>
-          </div>
-          <div className="card notes">
-            <div className="label">Notes</div>
-            <ul>
-              <li>Evaluation: +10 for AI win, −10 for opponent win, 0 for draw.</li>
-              <li>Pruning counts estimate nodes skipped when a beta ≤ alpha cut occurs.</li>
-            </ul>
-          </div>
-        </aside>
-      </section>
-
-      <footer>Built for Minimax vs Alpha‑Beta comparison with real‑time metrics.</footer>
+      </div>
     </div>
   );
 }
