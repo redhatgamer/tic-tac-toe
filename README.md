@@ -2,6 +2,8 @@
 
 This is a web-based Tic‑Tac‑Toe application comparing **Minimax** vs **Alpha‑Beta pruning** with live performance metrics.
 
+Go to the website: https://alphabetapruning.netlify.app/
+
 ## Features
 - Modes: **Human vs Human**, **Human vs AI**, **AI vs AI (auto‑play)**
 - Choose **who goes first**, which **algorithm(s)** to use, and **your side** in Human vs AI
