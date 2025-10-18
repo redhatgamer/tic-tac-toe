@@ -439,6 +439,31 @@ export default function App(){
             <p>See the difference between minimax approaches</p>
           </div>
         </div>
+
+        <div className="contributors-section">
+          <div className="contributors-container">
+            <h2 className="contributors-title">Contributors</h2>
+            <div className="contributors-grid">
+              <div className="contributor-card">
+                <div className="contributor-info">
+                  <h4 className="contributor-name">Carlos Mejia</h4>
+                </div>
+              </div>
+
+              <div className="contributor-card">
+                <div className="contributor-info">
+                  <h4 className="contributor-name">Mandy Saint Simon</h4>
+                </div>
+              </div>
+
+              <div className="contributor-card">
+                <div className="contributor-info">
+                  <h4 className="contributor-name">Pablo Valdes</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
